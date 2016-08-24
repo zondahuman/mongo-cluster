@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ss="http://www.springframework.org/schema/security"
+       xmlns:jee="http://www.springframework.org/schema/jee" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+	http://www.springframework.org/schema/context  http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+	http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- Spring自动将该包目录下标记为@Service的所有类作为spring的Bean -->
+    <context:component-scan base-package="com.abin.lee" />
+
+    <!-- <aop:aspectj-autoproxy proxy-target-class="true"/> -->
+
+    <bean id="mongodbPropertyConfig"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order" value="1" />
+        <property name="ignoreUnresolvablePlaceholders" value="true" />
+        <property name="locations">
+            <list>
+                <value>classpath:mongodb.properties</value>
+            </list>
+        </property>
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+    </bean>
+
+    <mongo:mongo id="mongo" replica-set="${im.hs.server.mongo.replicaSet}">
+        <mongo:options connections-per-host="400"
+                       threads-allowed-to-block-for-connection-multiplier="100"
+                       connect-timeout="10000" max-wait-time="15000" auto-connect-retry="true"
+                       socket-keep-alive="true" socket-timeout="15000" slave-ok="true"
+                       write-number="0" write-timeout="0" write-fsync="true" />
+    </mongo:mongo>
+
+
+    <!-- message数据库连接池配置开始 -->
+    <!-- 连接工厂 指定db名 -->
+    <mongo:db-factory id="mongoDbFactory" dbname="${im.hs.server.mongo.dbName}"
+                      mongo-ref="mongo" username="${im.hs.server.mongo.username}" password="${im.hs.server.mongo.password}" />
+
+
+    <!-- 对象映射成mongodb的一个collection的 -->
+    <mongo:mapping-converter id="mongoDbconverter"
+                             db-factory-ref="mongoDbFactory" />
+
+    <!-- mongodb的操作对象 -->
+    <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg ref="mongoDbFactory" />
+        <constructor-arg ref="mongoDbconverter" />
+    </bean>
+</beans>
